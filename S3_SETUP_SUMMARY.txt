@@ -1,0 +1,102 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║               S3 UPLOAD DAG - IMPLEMENTATION COMPLETE                    ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+✅ FILES CREATED/UPDATED:
+
+1. dags/s3_upload_dag.py (NEW)
+   - S3 upload DAG with customizable transformations
+   - Runs every 30 seconds
+   - Parallel uploads (max 3 concurrent)
+   - Smart deduplication with .uploaded marker files
+
+2. requirements.txt (UPDATED)
+   - Added: apache-airflow-providers-amazon>=8.0.0
+   - Enables AWS S3 integration
+
+3. .env (UPDATED)
+   - AWS_S3_BUCKET=synthea-patient-data
+   - AWS_S3_PREFIX=raw/fhir
+   - AWS_CONN_ID=aws_default
+   - ENABLE_TRANSFORMATIONS=false
+
+4. S3_UPLOAD_GUIDE.md (NEW)
+   - Complete configuration guide
+   - AWS credential setup instructions
+   - Transformation customization examples
+   - Troubleshooting guide
+
+═════════════════════════════════════════════════════════════════════════════
+
+🎯 KEY FEATURES:
+
+✓ Automatic folder scanning (detects new patient data)
+✓ Conditional transformations (enable/disable via env var)
+✓ S3 upload with organized structure
+✓ Upload tracking (prevents duplicates)
+✓ Error handling and retries
+✓ Parallel processing support
+
+═════════════════════════════════════════════════════════════════════════════
+
+📂 S3 STRUCTURE:
+
+s3://your-bucket/raw/fhir/patients/{patient_id}_{patient_name}/
+    ├── hospitalInformation{timestamp}.json
+    ├── {FirstName}_{LastName}_{patient_id}.json
+    └── practitionerInformation{timestamp}.json
+
+═════════════════════════════════════════════════════════════════════════════
+
+🚀 NEXT STEPS:
+
+1. Configure AWS Credentials:
+   - Airflow UI → Admin → Connections
+   - Add "aws_default" connection with your AWS keys
+   - See S3_UPLOAD_GUIDE.md for detailed instructions
+
+2. Update S3 Bucket Name:
+   - Edit .env file: AWS_S3_BUCKET=your-bucket-name
+
+3. Rebuild Containers:
+   cd /home/shiva/repos/hapi-server
+   docker-compose down
+   docker-compose up --build -d
+
+4. Monitor DAGs:
+   - Synthea Generation: http://localhost:8080 (synthea_patient_generation)
+   - S3 Upload: http://localhost:8080 (s3_upload_patient_data)
+
+═════════════════════════════════════════════════════════════════════════════
+
+🔧 CUSTOMIZATION:
+
+To enable data transformations before upload:
+   1. Set ENABLE_TRANSFORMATIONS=true in .env
+   2. Edit transform_data() function in dags/s3_upload_dag.py
+   3. Add your custom logic (PII redaction, validation, enrichment, etc.)
+
+To change upload frequency:
+   - Edit schedule_interval in dags/s3_upload_dag.py
+   - Default: "*/30 * * * *" (every 30 seconds)
+
+═════════════════════════════════════════════════════════════════════════════
+
+📊 WORKFLOW:
+
+Generation DAG (every 10 seconds):
+   Generate → Extract → Cleanup → Log
+        ↓
+   output/bundles/{patient_folder}/
+
+Upload DAG (every 30 seconds):
+   Scan → Branch → [Transform] → Upload → Mark
+                                    ↓
+                            S3 bucket/prefix/
+
+═════════════════════════════════════════════════════════════════════════════
+
+✅ IMPLEMENTATION STATUS: COMPLETE
+
+All files created successfully. Ready for deployment!
+

@@ -1,0 +1,90 @@
+name: Deploy Synthea HAPI Server
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << EOF
+          # Apache Airflow Environment Configuration
+          AIRFLOW__CORE__EXECUTOR=LocalExecutor
+          AIRFLOW__CORE__LOAD_EXAMPLES=False
+          AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+          AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=30
+          AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL=10
+          AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+          AIRFLOW__LOGGING__LOGGING_LEVEL=INFO
+          AIRFLOW_UID=50000
+          
+          # PostgreSQL Database Configuration
+          POSTGRES_USER=airflow
+          POSTGRES_PASSWORD=airflow
+          POSTGRES_DB=airflow
+          POSTGRES_PORT=5432
+          
+          # Airflow Web UI Admin User
+          _AIRFLOW_WWW_USER_CREATE=True
+          _AIRFLOW_WWW_USER_USERNAME=admin
+          _AIRFLOW_WWW_USER_PASSWORD=admin
+          _AIRFLOW_DB_UPGRADE=True
+          
+          # AWS S3 Configuration
+          AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_PREFIX=${{ secrets.AWS_S3_PREFIX }}
+          AWS_CONN_ID=aws_default
+          
+          # AWS Credentials (from GitHub Secrets)
+          AIRFLOW_CONN_AWS_DEFAULT=aws://${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}@?region_name=${{ secrets.AWS_REGION }}
+          
+          # Data Transformation Settings
+          ENABLE_TRANSFORMATIONS=${{ secrets.ENABLE_TRANSFORMATIONS }}
+          EOF
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker images
+        run: |
+          docker-compose build
+      
+      - name: Run tests (optional)
+        run: |
+          # Add your test commands here
+          echo "Running tests..."
+          # docker-compose run --rm airflow-scheduler pytest tests/
+      
+      - name: Deploy to production server
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Deploy to your server using SSH, SCP, or other methods
+          echo "Deploying to production..."
+          # Example SSH deployment:
+          # - Copy files to server
+          # - Run docker-compose on server
+          # - Health checks
+      
+      - name: Health check
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Performing health check..."
+          # Add health check logic here
+          # curl -f http://your-server:8080/health || exit 1
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          echo "Deployment completed with status: ${{ job.status }}"
+          # Add Slack/Discord/Email notification here

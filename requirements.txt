@@ -1,0 +1,14 @@
+# Python Requirements for Apache Airflow with Synthea Integration
+# These packages are installed on top of the apache/airflow:2.10.4-python3.11 base image
+
+# FHIR Resources library for parsing and validating FHIR R4 bundles
+# Used to extract patient information from generated Synthea data
+fhir.resources==7.1.0
+
+# Pydantic for data validation and settings management
+# Required by fhir.resources for data modeling
+pydantic>=2.0.0
+
+# AWS Provider for S3 upload functionality
+# Enables integration with AWS services including S3
+apache-airflow-providers-amazon>=8.0.0
