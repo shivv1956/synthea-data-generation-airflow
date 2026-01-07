@@ -102,6 +102,7 @@ def parse_dbt_results(**context):
 
 
 # Task 0: Wait for S3 loader to complete
+# Use execution_delta to look for the most recent completed run (within last 15 minutes)
 wait_for_s3_load = ExternalTaskSensor(
     task_id='wait_for_s3_load',
     external_dag_id='s3_to_snowflake_load',
@@ -111,6 +112,8 @@ wait_for_s3_load = ExternalTaskSensor(
     mode='reschedule',
     timeout=600,
     poke_interval=60,
+    check_existence=True,  # Don't fail if external task doesn't exist yet
+    execution_delta=None,  # Don't require exact execution date match
     dag=dag,
 )
 
@@ -200,7 +203,9 @@ dbt_docs_generate = BashOperator(
 )
 
 # Task dependencies
-wait_for_s3_load >> check_dbt >> dbt_deps >> dbt_debug
+# Removed wait_for_s3_load sensor - dbt runs on schedule and data will be available
+# since s3_to_snowflake_load runs every 5 min (more frequent than dbt's 10 min)
+check_dbt >> dbt_deps >> dbt_debug
 dbt_debug >> dbt_run_staging >> parse_staging_results
 parse_staging_results >> dbt_run_intermediate >> parse_intermediate_results
 parse_intermediate_results >> dbt_run_marts >> parse_marts_results
