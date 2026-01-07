@@ -25,8 +25,17 @@ echo ""
 
 # Create required directories
 echo "📁 Creating required directories..."
-mkdir -p logs dags plugins output/bundles
+mkdir -p logs dags plugins output/bundles dbt
 echo "✅ Directories created"
+echo ""
+
+# Fix permissions for Airflow user (UID 50000)
+echo "🔧 Setting correct permissions for Airflow..."
+sudo chown -R 50000:0 logs dags plugins output dbt 2>/dev/null || {
+    echo "⚠️  Warning: Could not set permissions (run with sudo if needed)"
+    echo "   You can manually run: sudo chown -R 50000:0 logs dags plugins output dbt"
+}
+echo "✅ Permissions configured"
 echo ""
 
 # Build and start services

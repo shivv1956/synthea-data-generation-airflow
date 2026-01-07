@@ -12,10 +12,12 @@ USER root
 # Install Java Runtime Environment and utilities
 # - default-jre: Java 11 runtime for executing Synthea JAR
 # - curl: for downloading Synthea JAR from GitHub releases
+# - git: required by dbt for package management
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         default-jre \
-        curl && \
+        curl \
+        git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

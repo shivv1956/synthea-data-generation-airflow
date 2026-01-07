@@ -39,6 +39,11 @@ webserver_config.py
 # Generated data
 output/
 
+dbt/dbt_packages/
+dbt/target/
+dbt/package-lock.yml
+dbt/.user.yml
+
 # Environment variables
 .env.local
 .env.*.local
