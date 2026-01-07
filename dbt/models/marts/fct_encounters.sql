@@ -13,8 +13,8 @@ Complete encounter/visit information with resolved references and costs
 WITH base_encounters AS (
   SELECT
     id,
-    start,
-    stop,
+    "START",
+    "STOP",
     patient,
     organization,
     provider,
@@ -69,9 +69,9 @@ SELECT
   provider_name,
   
   -- Encounter details
-  start as encounter_start,
-  stop as encounter_stop,
-  DATEDIFF(hour, start, stop) as encounter_duration_hours,
+  "START" as encounter_start,
+  "STOP" as encounter_stop,
+  DATEDIFF(hour, "START", "STOP") as encounter_duration_hours,
   encounterclass as encounter_class,
   code as encounter_code,
   description as encounter_description,

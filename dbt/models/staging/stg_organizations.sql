@@ -1,10 +1,7 @@
 {{
   config(
-    materialized='incremental',
-    unique_key='id',
-    incremental_strategy='merge',
-    on_schema_change='sync_all_columns',
-    tags=['staging', 'organization', 'incremental']
+    materialized='table',
+    tags=['staging', 'organization']
   )
 }}
 
@@ -18,12 +15,8 @@ WITH source AS (
   SELECT
     file_key,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
-  
-  {% if is_incremental() %}
-  WHERE loaded_at > (SELECT COALESCE(MAX(loaded_at), '1900-01-01'::TIMESTAMP) FROM {{ this }})
-  {% endif %}
 ),
 
 organization_resources AS (
@@ -32,49 +25,48 @@ organization_resources AS (
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'Organization'
+),
+
+-- Extract geolocation using LEFT JOIN
+geolocation AS (
+  SELECT
+    resource:id::STRING as org_id,
+    MAX(CASE WHEN geo_ext.value:url::STRING = 'latitude' THEN geo_ext.value:valueDecimal::FLOAT END) as lat,
+    MAX(CASE WHEN geo_ext.value:url::STRING = 'longitude' THEN geo_ext.value:valueDecimal::FLOAT END) as lon
+  FROM organization_resources,
+  LATERAL FLATTEN(input => resource:address[0]:extension, outer => true) addr_ext,
+  LATERAL FLATTEN(input => addr_ext.value:extension, outer => true) geo_ext
+  WHERE addr_ext.value:url::STRING = 'http://hl7.org/fhir/StructureDefinition/geolocation'
+  GROUP BY org_id
 ),
 
 flattened AS (
   SELECT
-    resource:id::STRING as id,
-    resource:name::STRING as name,
+    org.resource:id::STRING as id,
+    org.resource:name::STRING as name,
     
     -- Address
-    resource:address[0]:line[0]::STRING as address,
-    resource:address[0]:city::STRING as city,
-    resource:address[0]:state::STRING as state,
-    resource:address[0]:postalCode::STRING as zip,
+    org.resource:address[0]:line[0]::STRING as address,
+    org.resource:address[0]:city::STRING as city,
+    org.resource:address[0]:state::STRING as state,
+    org.resource:address[0]:postalCode::STRING as zip,
     
-    -- Geolocation
-    (
-      SELECT geo_ext.value:valueDecimal::FLOAT
-      FROM LATERAL FLATTEN(input => resource:address[0]:extension) addr_ext,
-           LATERAL FLATTEN(input => addr_ext.value:extension) geo_ext
-      WHERE addr_ext.value:url::STRING = 'http://hl7.org/fhir/StructureDefinition/geolocation'
-        AND geo_ext.value:url::STRING = 'latitude'
-      LIMIT 1
-    ) as lat,
-    
-    (
-      SELECT geo_ext.value:valueDecimal::FLOAT
-      FROM LATERAL FLATTEN(input => resource:address[0]:extension) addr_ext,
-           LATERAL FLATTEN(input => addr_ext.value:extension) geo_ext
-      WHERE addr_ext.value:url::STRING = 'http://hl7.org/fhir/StructureDefinition/geolocation'
-        AND geo_ext.value:url::STRING = 'longitude'
-      LIMIT 1
-    ) as lon,
+    -- Geolocation from CTE
+    g.lat,
+    g.lon,
     
     -- Contact
-    resource:telecom[0]:value::STRING as phone,
+    org.resource:telecom[0]:value::STRING as phone,
     
     -- Financial aggregates - will be calculated in marts
     0.00 as revenue,
     0 as utilization,
     
-    loaded_at
-  FROM organization_resources
+    org.loaded_at
+  FROM organization_resources org
+  LEFT JOIN geolocation g ON org.resource:id::STRING = g.org_id
 )
 
 SELECT * FROM flattened

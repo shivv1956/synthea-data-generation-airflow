@@ -18,7 +18,7 @@ WITH source AS (
   SELECT
     file_key,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
   
   {% if is_incremental() %}
@@ -37,7 +37,7 @@ device_definitions AS (
     ) as description,
     entry.value:resource:udiCarrier[0]:deviceIdentifier::STRING as udi
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'Device'
 ),
 
@@ -48,7 +48,7 @@ device_use_resources AS (
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING IN ('DeviceUseStatement', 'DeviceRequest')
 ),
 

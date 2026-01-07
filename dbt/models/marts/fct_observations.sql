@@ -27,7 +27,7 @@ WITH base_observations AS (
 )
 
 SELECT
-  surrogate_key as observation_key,
+  {{ dbt_utils.generate_surrogate_key(['id', 'date', 'patient']) }} as observation_key,
   patient as patient_id,
   encounter as encounter_id,
   

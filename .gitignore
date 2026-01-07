@@ -63,3 +63,5 @@ dbt/.user.yml
 *.db
 *.sqlite
 *.sqlite3
+
+dbt/profiles-local.yml

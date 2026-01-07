@@ -31,19 +31,19 @@ models:
       +unique_key: id
       +incremental_strategy: merge
       +on_schema_change: sync_all_columns
-      +schema: staging
+      +schema: STAGING
       +tags: ["staging", "incremental"]
       
     # Intermediate models: Full refresh with table materialization
     intermediate:
       +materialized: table
-      +schema: intermediate
+      +schema: INTERMEDIATE
       +tags: ["intermediate", "full_refresh"]
       
     # Marts models: Table materialization for analytics
     marts:
       +materialized: table
-      +schema: marts
+      +schema: MARTS
       +tags: ["marts", "analytics"]
 
 # Seeds configuration

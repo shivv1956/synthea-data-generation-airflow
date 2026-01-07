@@ -17,9 +17,8 @@ Matches Synthea MEDICATIONS.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
   
   {% if is_incremental() %}
@@ -30,23 +29,22 @@ WITH source AS (
 medication_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'MedicationRequest'
 ),
 
 flattened AS (
   SELECT
     resource:id::STRING as id,
-    TRY_TO_TIMESTAMP(resource:authoredOn::STRING) as start,
+    TRY_TO_TIMESTAMP(resource:authoredOn::STRING) as "START",
     
     -- Stop date from dispense or null
     TRY_TO_TIMESTAMP(
       resource:dispenseRequest:validityPeriod:end::STRING
-    ) as stop,
+    ) as "STOP",
     
     {{ extract_uuid_from_reference('resource:subject:reference') }} as patient,
     

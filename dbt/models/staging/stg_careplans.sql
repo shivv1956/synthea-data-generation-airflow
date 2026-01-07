@@ -17,9 +17,8 @@ Matches Synthea CAREPLANS.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
   
   {% if is_incremental() %}
@@ -30,19 +29,18 @@ WITH source AS (
 careplan_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'CarePlan'
 ),
 
 flattened AS (
   SELECT
     resource:id::STRING as id,
-    TRY_TO_DATE(resource:period:start::STRING) as start,
-    TRY_TO_DATE(resource:period:end::STRING) as stop,
+    TRY_TO_DATE(resource:period:start::STRING) as "START",
+    TRY_TO_DATE(resource:period:end::STRING) as "STOP",
     {{ extract_uuid_from_reference('resource:subject:reference') }} as patient,
     {{ extract_uuid_from_reference('resource:encounter:reference') }} as encounter,
     

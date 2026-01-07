@@ -19,7 +19,7 @@ WITH source AS (
   SELECT
     file_key,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
   
   {% if is_incremental() %}
@@ -31,10 +31,11 @@ WITH source AS (
 eob_resources AS (
   SELECT
     source.file_key,
+
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'ExplanationOfBenefit'
 ),
 

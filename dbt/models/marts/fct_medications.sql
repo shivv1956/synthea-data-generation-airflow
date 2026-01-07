@@ -13,8 +13,8 @@ Prescription medication data with resolved reasons and costs
 WITH base_medications AS (
   SELECT
     id,
-    start,
-    stop,
+    "START",
+    "STOP",
     patient,
     encounter,
     code,
@@ -56,9 +56,9 @@ SELECT
   -- Medication details
   code as medication_code,
   description as medication_description,
-  start as prescription_start,
-  stop as prescription_stop,
-  DATEDIFF(day, start, stop) as prescription_duration_days,
+  "START" as prescription_start,
+  "STOP" as prescription_stop,
+  DATEDIFF(day, "START", "STOP") as prescription_duration_days,
   dispenses as number_of_dispenses,
   
   -- Reason for medication

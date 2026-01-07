@@ -13,8 +13,8 @@ Medical procedure data with resolved reasons and costs
 WITH base_procedures AS (
   SELECT
     id,
-    start,
-    stop,
+    "START",
+    "STOP",
     patient,
     encounter,
     system,
@@ -55,9 +55,9 @@ SELECT
   system as code_system,
   code as procedure_code,
   description as procedure_description,
-  start as procedure_start,
-  stop as procedure_stop,
-  DATEDIFF(minute, start, stop) as procedure_duration_minutes,
+  "START" as procedure_start,
+  "STOP" as procedure_stop,
+  DATEDIFF(minute, "START", "STOP") as procedure_duration_minutes,
   
   -- Reason for procedure
   reasoncode as reason_code,

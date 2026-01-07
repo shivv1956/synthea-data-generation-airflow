@@ -19,15 +19,12 @@ sources:
               - unique
               - not_null
           
-          - name: patient_id
-            description: "Patient UUID extracted from bundle"
-          
           - name: loaded_at
             description: "Timestamp when bundle was loaded to Snowflake"
             tests:
               - not_null
           
-          - name: bundle
+          - name: bundle_data
             description: "FHIR bundle as VARIANT (JSON) type"
             tests:
               - not_null

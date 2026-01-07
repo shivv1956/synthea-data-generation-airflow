@@ -17,9 +17,8 @@ Matches Synthea ALLERGIES.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
   
   {% if is_incremental() %}
@@ -30,11 +29,10 @@ WITH source AS (
 allergy_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'AllergyIntolerance'
 ),
 
@@ -70,6 +68,6 @@ flattened AS (
 )
 
 SELECT
-  {{ generate_surrogate_key(['id', 'patient', 'start']) }} as surrogate_key,
+  {{ generate_surrogate_key(['id', 'patient', '"START"']) }} as surrogate_key,
   *
 FROM flattened

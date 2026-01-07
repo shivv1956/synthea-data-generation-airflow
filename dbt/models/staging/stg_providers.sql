@@ -1,10 +1,7 @@
 {{
   config(
-    materialized='incremental',
-    unique_key='id',
-    incremental_strategy='merge',
-    on_schema_change='sync_all_columns',
-    tags=['staging', 'provider', 'incremental']
+    materialized='table',
+    tags=['staging', 'provider']
   )
 }}
 
@@ -18,79 +15,88 @@ WITH source AS (
   SELECT
     file_key,
     loaded_at,
-    bundle
+    bundle_data
   FROM {{ source('raw', 'fhir_bundles') }}
-  
-  {% if is_incremental() %}
-  WHERE loaded_at > (SELECT COALESCE(MAX(loaded_at), '1900-01-01'::TIMESTAMP) FROM {{ this }})
-  {% endif %}
 ),
 
 practitioner_resources AS (
   SELECT
     source.file_key,
+
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
-  LATERAL FLATTEN(input => source.bundle:entry) entry
+  LATERAL FLATTEN(input => source.bundle_data:entry) entry
   WHERE entry.value:resource:resourceType::STRING = 'Practitioner'
+),
+
+-- Extract NPI identifier using LEFT JOIN
+npi_identifier AS (
+  SELECT
+    resource:id::STRING as practitioner_id,
+    MAX(id_elem.value:value::STRING) as npi
+  FROM practitioner_resources,
+  LATERAL FLATTEN(input => resource:identifier, outer => true) id_elem
+  WHERE id_elem.value:system::STRING = 'http://hl7.org/fhir/sid/us-npi'
+  GROUP BY practitioner_id
+),
+
+-- Extract geolocation using LEFT JOIN
+geolocation AS (
+  SELECT
+    resource:id::STRING as practitioner_id,
+    MAX(CASE WHEN geo_ext.value:url::STRING = 'latitude' THEN geo_ext.value:valueDecimal::FLOAT END) as lat,
+    MAX(CASE WHEN geo_ext.value:url::STRING = 'longitude' THEN geo_ext.value:valueDecimal::FLOAT END) as lon
+  FROM practitioner_resources,
+  LATERAL FLATTEN(input => resource:address[0]:extension, outer => true) addr_ext,
+  LATERAL FLATTEN(input => addr_ext.value:extension, outer => true) geo_ext
+  WHERE addr_ext.value:url::STRING = 'http://hl7.org/fhir/StructureDefinition/geolocation'
+  GROUP BY practitioner_id
 ),
 
 flattened AS (
   SELECT
-    resource:id::STRING as id,
+    -- NPI from CTE
+    npi.npi as id,
     
     -- Organization will be resolved in intermediate model
     NULL as organization,
     
     -- Construct full name
     CONCAT_WS(' ',
-      resource:name[0]:prefix[0]::STRING,
-      resource:name[0]:given[0]::STRING,
-      resource:name[0]:family::STRING,
-      resource:name[0]:suffix[0]::STRING
+      pr.resource:name[0]:prefix[0]::STRING,
+      pr.resource:name[0]:given[0]::STRING,
+      pr.resource:name[0]:family::STRING,
+      pr.resource:name[0]:suffix[0]::STRING
     ) as name,
     
-    resource:gender::STRING as gender,
+    pr.resource:gender::STRING as gender,
     
     -- Specialty from qualification
     COALESCE(
-      resource:qualification[0]:code:coding[0]:display::STRING,
-      resource:qualification[0]:code:text::STRING,
+      pr.resource:qualification[0]:code:coding[0]:display::STRING,
+      pr.resource:qualification[0]:code:text::STRING,
       'General Practice'
     ) as speciality,
     
     -- Address
-    resource:address[0]:line[0]::STRING as address,
-    resource:address[0]:city::STRING as city,
-    resource:address[0]:state::STRING as state,
-    resource:address[0]:postalCode::STRING as zip,
+    pr.resource:address[0]:line[0]::STRING as address,
+    pr.resource:address[0]:city::STRING as city,
+    pr.resource:address[0]:state::STRING as state,
+    pr.resource:address[0]:postalCode::STRING as zip,
     
-    -- Geolocation
-    (
-      SELECT geo_ext.value:valueDecimal::FLOAT
-      FROM LATERAL FLATTEN(input => resource:address[0]:extension) addr_ext,
-           LATERAL FLATTEN(input => addr_ext.value:extension) geo_ext
-      WHERE addr_ext.value:url::STRING = 'http://hl7.org/fhir/StructureDefinition/geolocation'
-        AND geo_ext.value:url::STRING = 'latitude'
-      LIMIT 1
-    ) as lat,
-    
-    (
-      SELECT geo_ext.value:valueDecimal::FLOAT
-      FROM LATERAL FLATTEN(input => resource:address[0]:extension) addr_ext,
-           LATERAL FLATTEN(input => addr_ext.value:extension) geo_ext
-      WHERE addr_ext.value:url::STRING = 'http://hl7.org/fhir/StructureDefinition/geolocation'
-        AND geo_ext.value:url::STRING = 'longitude'
-      LIMIT 1
-    ) as lon,
+    -- Geolocation from CTE
+    g.lat,
+    g.lon,
     
     -- Aggregated counts - will be calculated in marts
     0 as encounters,
     0 as procedures,
     
-    loaded_at
-  FROM practitioner_resources
+    pr.loaded_at
+  FROM practitioner_resources pr
+  LEFT JOIN npi_identifier npi ON pr.resource:id::STRING = npi.practitioner_id
+  LEFT JOIN geolocation g ON pr.resource:id::STRING = g.practitioner_id
 )
 
 SELECT * FROM flattened
