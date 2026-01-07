@@ -17,7 +17,6 @@ Matches Synthea PAYERS.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
     bundle
   FROM {{ source('raw', 'fhir_bundles') }}
@@ -31,7 +30,6 @@ WITH source AS (
 payer_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,

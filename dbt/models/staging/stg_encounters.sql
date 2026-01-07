@@ -17,7 +17,6 @@ Matches Synthea ENCOUNTERS.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
     bundle
   FROM {{ source('raw', 'fhir_bundles') }}
@@ -30,7 +29,6 @@ WITH source AS (
 encounter_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
@@ -41,8 +39,8 @@ encounter_resources AS (
 flattened AS (
   SELECT
     resource:id::STRING as id,
-    TRY_TO_TIMESTAMP(resource:period:start::STRING) as start,
-    TRY_TO_TIMESTAMP(resource:period:end::STRING) as stop,
+    TRY_TO_TIMESTAMP(resource:period:start::STRING) as "START",
+    TRY_TO_TIMESTAMP(resource:period:end::STRING) as "STOP",
     {{ extract_uuid_from_reference('resource:subject:reference') }} as patient,
     {{ extract_uuid_from_reference('resource:serviceProvider:reference') }} as organization,
     {{ extract_uuid_from_reference('resource:participant[0]:individual:reference') }} as provider,

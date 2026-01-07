@@ -17,7 +17,6 @@ Matches Synthea CONDITIONS.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
     bundle
   FROM {{ source('raw', 'fhir_bundles') }}
@@ -30,7 +29,6 @@ WITH source AS (
 condition_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
@@ -41,8 +39,8 @@ condition_resources AS (
 flattened AS (
   SELECT
     resource:id::STRING as id,
-    TRY_TO_DATE(resource:onsetDateTime::STRING) as start,
-    TRY_TO_DATE(resource:abatementDateTime::STRING) as stop,
+    TRY_TO_DATE(resource:onsetDateTime::STRING) as "START",
+    TRY_TO_DATE(resource:abatementDateTime::STRING) as "STOP",
     {{ extract_uuid_from_reference('resource:subject:reference') }} as patient,
     {{ extract_uuid_from_reference('resource:encounter:reference') }} as encounter,
     resource:code:coding[0]:system::STRING as system,

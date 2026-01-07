@@ -41,8 +41,8 @@ allergy_resources AS (
 flattened AS (
   SELECT
     resource:id::STRING as id,
-    TRY_TO_DATE(resource:onsetDateTime::STRING) as start,
-    TRY_TO_DATE(resource:lastOccurrence::STRING) as stop,
+    TRY_TO_DATE(resource:onsetDateTime::STRING) as "START",
+    TRY_TO_DATE(resource:lastOccurrence::STRING) as "STOP",
     {{ extract_uuid_from_reference('resource:patient:reference') }} as patient,
     {{ extract_uuid_from_reference('resource:encounter:reference') }} as encounter,
     

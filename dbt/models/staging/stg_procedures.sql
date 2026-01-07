@@ -17,7 +17,6 @@ Matches Synthea PROCEDURES.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
     bundle
   FROM {{ source('raw', 'fhir_bundles') }}
@@ -30,7 +29,6 @@ WITH source AS (
 procedure_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
@@ -45,9 +43,9 @@ flattened AS (
     COALESCE(
       TRY_TO_TIMESTAMP(resource:performedPeriod:start::STRING),
       TRY_TO_TIMESTAMP(resource:performedDateTime::STRING)
-    ) as start,
+    ) as "START",
     
-    TRY_TO_TIMESTAMP(resource:performedPeriod:end::STRING) as stop,
+    TRY_TO_TIMESTAMP(resource:performedPeriod:end::STRING) as "STOP",
     
     {{ extract_uuid_from_reference('resource:subject:reference') }} as patient,
     {{ extract_uuid_from_reference('resource:encounter:reference') }} as encounter,

@@ -57,7 +57,7 @@ flattened AS (
     
     COALESCE(
       resource:medicationCodeableConcept:coding[0]:code::STRING,
-      resource:medicationReference:reference::STRING
+      {{ extract_uuid_from_reference('resource:medicationReference:reference') }}
     ) as code,
     
     COALESCE(

@@ -17,7 +17,6 @@ Matches Synthea DEVICES.CSV schema
 WITH source AS (
   SELECT
     file_key,
-    patient_id,
     loaded_at,
     bundle
   FROM {{ source('raw', 'fhir_bundles') }}
@@ -46,7 +45,6 @@ device_definitions AS (
 device_use_resources AS (
   SELECT
     source.file_key,
-    source.patient_id,
     source.loaded_at,
     entry.value:resource AS resource
   FROM source,
@@ -63,8 +61,8 @@ flattened AS (
         resource:timingPeriod:start::STRING,
         resource:authoredOn::STRING
       )
-    ) as start,
-    TRY_TO_TIMESTAMP(resource:timingPeriod:end::STRING) as stop,
+    ) as "START",
+    TRY_TO_TIMESTAMP(resource:timingPeriod:end::STRING) as "STOP",
     {{ extract_uuid_from_reference('resource:subject:reference') }} as patient,
     {{ extract_uuid_from_reference('resource:context:reference') }} as encounter,
     
