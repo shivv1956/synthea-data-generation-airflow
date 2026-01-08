@@ -11,6 +11,7 @@ Dependencies: Triggered after s3_upload_patient_data DAG
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 import logging
@@ -303,5 +304,13 @@ task_update_watermark = PythonOperator(
     dag=dag,
 )
 
+task_trigger_dbt = TriggerDagRunOperator(
+    task_id='trigger_dbt_transform',
+    trigger_dag_id='dbt_transform_fhir',
+    wait_for_completion=False,  # Don't wait for dbt to complete
+    reset_dag_run=False,
+    dag=dag,
+)
+
 # Task dependencies
-task_create_tables >> task_get_watermark >> task_list_files >> task_load_files >> task_update_watermark
+task_create_tables >> task_get_watermark >> task_list_files >> task_load_files >> task_update_watermark >> task_trigger_dbt

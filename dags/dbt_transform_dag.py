@@ -11,7 +11,6 @@ Dependencies: Waits for s3_to_snowflake_load DAG to complete
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.operators.python import PythonOperator
 import logging
 import json
@@ -33,7 +32,7 @@ dag = DAG(
     'dbt_transform_fhir',
     default_args=default_args,
     description='Run dbt transformations on FHIR data',
-    schedule_interval='*/10 * * * *',  # Every 10 minutes
+    schedule_interval=None,  # Triggered by s3_to_snowflake_load DAG
     max_active_runs=1,  # Sequential execution only
     catchup=False,
     tags=['dbt', 'transformation', 'fhir', 'analytics'],
@@ -100,22 +99,6 @@ def parse_dbt_results(**context):
         logging.error(f'Error parsing dbt results: {str(e)}')
         return None
 
-
-# Task 0: Wait for S3 loader to complete
-# Use execution_delta to look for the most recent completed run (within last 15 minutes)
-wait_for_s3_load = ExternalTaskSensor(
-    task_id='wait_for_s3_load',
-    external_dag_id='s3_to_snowflake_load',
-    external_task_id='update_watermark',
-    allowed_states=['success'],
-    failed_states=['failed', 'skipped'],
-    mode='reschedule',
-    timeout=600,
-    poke_interval=60,
-    check_existence=True,  # Don't fail if external task doesn't exist yet
-    execution_delta=None,  # Don't require exact execution date match
-    dag=dag,
-)
 
 # Task 1: Check dbt installation
 check_dbt = PythonOperator(
