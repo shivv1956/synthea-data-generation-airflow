@@ -6,12 +6,12 @@ models:
     config:
       tags: ['marts', 'dimension', 'patients']
     columns:
-      - name: patient_key
-        description: "Unique patient identifier"
+      - name: patient_id
+        description: "Unique patient identifier (Primary Key)"
         tests:
           - unique
           - not_null
-      - name: current_age
+      - name: age
         description: "Calculated current age in years"
       - name: lifetime_healthcare_expenses
         description: "Total healthcare costs incurred by patient"
@@ -21,8 +21,8 @@ models:
     config:
       tags: ['marts', 'fact', 'encounters']
     columns:
-      - name: encounter_key
-        description: "Unique encounter identifier"
+      - name: encounter_id
+        description: "Unique encounter identifier (Primary Key)"
         tests:
           - unique
           - not_null

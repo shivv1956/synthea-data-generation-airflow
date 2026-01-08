@@ -68,19 +68,13 @@ patient_expenses AS (
 )
 
 SELECT
-  p.id as patient_key,
-  p.ssn,
-  p.drivers as drivers_license,
-  p.passport,
+  -- Primary Key
+  p.id as patient_id,
   
-  -- Name
-  p.prefix,
+  -- Name Attributes
   p.first as first_name,
-  p.middle as middle_name,
   p.last as last_name,
-  p.suffix,
-  p.maiden as maiden_name,
-  CONCAT_WS(' ', p.prefix, p.first, p.middle, p.last, p.suffix) as full_name,
+  CONCAT_WS(' ', p.first, p.last) as full_name,
   
   -- Demographics
   p.gender,
@@ -88,21 +82,26 @@ SELECT
   p.deathdate as death_date,
   p.age,
   p.is_alive,
-  p.marital as marital_status,
   p.race,
   p.ethnicity,
-  p.birthplace,
+  p.marital as marital_status,
   
   -- Address
   p.address,
   p.city,
   p.state,
   p.county,
-  p.zip as zip_code,
+  p.zip,
   p.lat as latitude,
   p.lon as longitude,
   
-  -- Financial
+  -- Additional Attributes
+  p.ssn,
+  p.drivers as drivers_license,
+  p.passport,
+  p.birthplace,
+  
+  -- Financial Measures
   COALESCE(exp.total_healthcare_expenses, 0.00) as lifetime_healthcare_expenses,
   COALESCE(exp.total_healthcare_coverage, 0.00) as lifetime_healthcare_coverage,
   COALESCE(exp.total_healthcare_expenses - exp.total_healthcare_coverage, 0.00) as patient_out_of_pocket,

@@ -6,8 +6,8 @@
 }}
 
 /*
-Marts Model: Encounters Fact Table
-Complete encounter/visit information with resolved references and costs
+Marts Model: Fact Encounters
+Central transactional table for healthcare encounters with star schema design
 */
 
 WITH base_encounters AS (
@@ -18,6 +18,7 @@ WITH base_encounters AS (
     patient,
     organization,
     provider,
+    payer,
     encounterclass,
     code,
     description,
@@ -38,47 +39,34 @@ enriched_encounters AS (
   LEFT JOIN {{ ref('int_claims_enriched') }} costs
     ON enc.id = costs.resource_id
     AND costs.cost_type = 'encounter'
-),
-
--- Resolve references
-with_references AS (
-  SELECT
-    enc.*,
-    ref_patient.display_name as patient_name,
-    ref_org.display_name as organization_name,
-    ref_provider.display_name as provider_name
-  FROM enriched_encounters enc
-  LEFT JOIN {{ ref('int_reference_map') }} ref_patient
-    ON enc.patient = ref_patient.resource_id
-    AND ref_patient.resource_type = 'Patient'
-  LEFT JOIN {{ ref('int_reference_map') }} ref_org
-    ON enc.organization = ref_org.resource_id
-    AND ref_org.resource_type = 'Organization'
-  LEFT JOIN {{ ref('int_reference_map') }} ref_provider
-    ON enc.provider = ref_provider.resource_id
-    AND ref_provider.resource_type = 'Practitioner'
 )
 
 SELECT
-  id as encounter_key,
-  patient as patient_id,
-  patient_name,
-  organization as organization_id,
-  organization_name,
-  provider as provider_id,
-  provider_name,
+  -- Primary Key
+  id as encounter_id,
   
-  -- Encounter details
-  "START" as encounter_start,
-  "STOP" as encounter_stop,
-  DATEDIFF(hour, "START", "STOP") as encounter_duration_hours,
+  -- Foreign Keys (to dimension tables)
+  patient as patient_id,
+  provider as provider_id,
+  organization as organization_id,
+  payer as payer_id,
+  TO_NUMBER(TO_CHAR("START", 'YYYYMMDD')) as start_date_key,
+  TO_NUMBER(TO_CHAR("STOP", 'YYYYMMDD')) as end_date_key,
+  
+  -- Encounter Attributes
   encounterclass as encounter_class,
-  code as encounter_code,
-  description as encounter_description,
+  code,
+  description,
   reasoncode as reason_code,
   reasondescription as reason_description,
   
-  -- Financial
+  -- Temporal Attributes
+  "START" as encounter_start_datetime,
+  "STOP" as encounter_end_datetime,
+  DATEDIFF(hour, "START", "STOP") as encounter_duration_hours,
+  DATEDIFF(day, "START", "STOP") as encounter_duration_days,
+  
+  -- Financial Measures
   base_encounter_cost,
   total_claim_cost,
   payer_coverage,
@@ -87,4 +75,4 @@ SELECT
   -- Metadata
   loaded_at as last_updated_at
   
-FROM with_references
+FROM enriched_encounters
