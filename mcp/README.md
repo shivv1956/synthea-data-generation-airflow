@@ -26,24 +26,28 @@ This Model Context Protocol (MCP) server enables AI assistants like Claude, Chat
    - Filter by resource type (model, test, source)
    - Use dbt selection syntax
 
-6. **dbt_debug** - Check project health
-   - Verify database connection
-   - Validate configuration
+6. **dbt_build** - Execute models and tests together
+   - Build models with dependencies
+   - Run tests automatically after builds
+   - Support for incremental models
 
-7. **get_model_sql** - Retrieve SQL for specific models
-   - View compiled or source SQL
+7. **get_model_lineage** - Retrieve lineage for specific models
+   - View upstream and downstream dependencies
+   - Analyze model relationships
 
-8. **get_run_results** - View last execution results
-   - Execution statistics
-   - Success/failure status
+8. **get_column_lineage** - Retrieve column-level lineage
+   - Track column transformations across models
+   - Identify data lineage at column level
 
-9. **get_manifest** - Access project metadata
-   - Model lineage
-   - Dependencies and relationships
+9. **dbt_show** - Preview model outputs without full execution
+   - Display first N rows of model results
+   - Validate model logic quickly
 
-10. **dbt_snapshot** - Run SCD Type 2 snapshots
+10. **dbt_parse** - Parse dbt project and validate configuration
+   - Validate dbt_project.yml and model files
+   - Check for syntax errors and missing dependencies
+   - Return project metadata and structure
 
-11. **dbt_source_freshness** - Check data freshness
 
 ## Installation
 
@@ -67,13 +71,6 @@ pip install -e .
 ```bash
 export DBT_PROJECT_DIR="/opt/airflow/dbt"
 export DBT_PROFILES_DIR="/opt/airflow/dbt"
-export SNOWFLAKE_ACCOUNT="your-account"
-export SNOWFLAKE_USER="your-user"
-export SNOWFLAKE_PASSWORD="your-password"
-export SNOWFLAKE_DATABASE="SYNTHEA"
-export SNOWFLAKE_WAREHOUSE="COMPUTE_WH"
-export SNOWFLAKE_SCHEMA="RAW"
-export SNOWFLAKE_ROLE="TRANSFORMER"
 ```
 
 3. **Test the server:**
@@ -92,18 +89,11 @@ Add to your Claude Desktop configuration (`claude_desktop_config.json`):
 {
   "mcpServers": {
     "dbt-synthea-fhir": {
-      "command": "python",
+      "command": "uvx",
       "args": ["/home/shiva/repos/synthea-data-generation-airflow/mcp/server.py"],
       "env": {
         "DBT_PROJECT_DIR": "/opt/airflow/dbt",
         "DBT_PROFILES_DIR": "/opt/airflow/dbt",
-        "SNOWFLAKE_ACCOUNT": "your-account",
-        "SNOWFLAKE_USER": "your-user",
-        "SNOWFLAKE_PASSWORD": "your-password",
-        "SNOWFLAKE_DATABASE": "SYNTHEA",
-        "SNOWFLAKE_WAREHOUSE": "COMPUTE_WH",
-        "SNOWFLAKE_SCHEMA": "RAW",
-        "SNOWFLAKE_ROLE": "TRANSFORMER"
       }
     }
   }

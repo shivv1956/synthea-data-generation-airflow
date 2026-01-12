@@ -40,6 +40,7 @@ webserver_config.py
 output/
 
 dbt/dbt_packages/
+dbt/dbt_internal_packages/
 dbt/target/
 dbt/package-lock.yml
 dbt/.user.yml
@@ -65,3 +66,6 @@ dbt/.user.yml
 *.sqlite3
 
 dbt/profiles-local.yml
+
+# Cursor
+.cursor/
