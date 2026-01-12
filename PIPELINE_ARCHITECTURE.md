@@ -1,4 +1,5 @@
-# FHIR Data Pipeline Architecture
+# Healthcare Analytics Platform Architecture
+## End-to-End FHIR Data Pipeline with AI Integration
 
 ## Pipeline Overview
 
@@ -131,7 +132,27 @@
                     │  - Cost analytics               │
                     │  - Clinical outcomes            │
                     │  - Population health metrics    │
-                    └─────────────────────────────────┘
+                    └────────────┬────────────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+                    ▼                         ▼
+           ┌─────────────────┐      ┌─────────────────┐
+           │  AI ASSISTANTS  │      │  DATA ANALYSTS  │
+           │  (via MCP)      │      │  (via SQL/BI)   │
+           │  - Claude       │      │  - Snowflake    │
+           │  - Cursor       │      │  - Dashboards   │
+           │  - Zed          │      │  - Reports      │
+           └─────────────────┘      └─────────────────┘
+                    │
+                    ▼
+           ┌─────────────────┐
+           │  DBT MCP SERVER │
+           │  - dbt_run      │
+           │  - dbt_test     │
+           │  - get_sql      │
+           │  - get_docs     │
+           └─────────────────┘
 ```
 
 ## DAG Execution Timeline

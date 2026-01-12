@@ -1,0 +1,42 @@
+[project]
+name = "dbt-synthea-fhir-mcp"
+version = "1.0.0"
+description = "Model Context Protocol server for DBT Synthea FHIR Analytics Pipeline"
+authors = [
+    {name = "Synthea Data Pipeline Team"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=0.9.0",
+    "dbt-core>=1.7.0,<1.8.0",
+    "dbt-snowflake>=1.7.0,<1.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["mcp"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

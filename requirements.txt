@@ -21,3 +21,7 @@ apache-airflow-providers-snowflake>=5.0.0
 # Core package and Snowflake adapter for ELT workflows
 dbt-core>=1.7.0,<1.8.0
 dbt-snowflake>=1.7.0,<1.8.0
+
+# Model Context Protocol (MCP) for AI assistant integration
+# Enables AI tools to interact with dbt project
+mcp>=0.9.0

@@ -37,12 +37,16 @@ x-airflow-common:
     SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE}
     SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA}
     SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE}
+    # MCP Server configuration
+    DBT_PROJECT_DIR: /opt/airflow/dbt
+    DBT_PROFILES_DIR: /opt/airflow/dbt
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - ./output:/opt/airflow/output
     - ./dbt:/opt/airflow/dbt
+    - ./mcp:/opt/airflow/mcp
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
@@ -74,8 +78,8 @@ services:
     command:
       - -c
       - |
-        mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/plugins /opt/airflow/output /opt/airflow/dbt
-        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/{logs,dags,plugins,output,dbt}
+        mkdir -p /opt/airflow/logs /opt/airflow/dags /opt/airflow/plugins /opt/airflow/output /opt/airflow/dbt /opt/airflow/mcp
+        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/{logs,dags,plugins,output,dbt,mcp}
         exec /entrypoint airflow version
     environment:
       <<: *airflow-common-env

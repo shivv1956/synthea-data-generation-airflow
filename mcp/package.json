@@ -1,0 +1,26 @@
+{
+  "name": "dbt-synthea-fhir-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for DBT Synthea FHIR Analytics Pipeline",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py",
+    "test": "pytest tests/",
+    "lint": "ruff check .",
+    "format": "black ."
+  },
+  "keywords": [
+    "mcp",
+    "dbt",
+    "synthea",
+    "fhir",
+    "healthcare",
+    "analytics"
+  ],
+  "author": "Synthea Data Pipeline Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/synthea-data-generation-airflow"
+  }
+}

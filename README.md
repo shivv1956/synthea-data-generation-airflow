@@ -1,6 +1,16 @@
-# Synthea Patient Data Generator with Apache Airflow
+# End-to-End Healthcare Analytics Platform
+## AI-Powered FHIR Data Pipeline with Real-Time Intelligence
 
-This project uses Apache Airflow 2.10 to orchestrate the generation of synthetic patient data using [Synthea](https://github.com/synthetichealth/synthea). The system generates random FHIR R4 patient bundles every 10 seconds and automatically cleans up data older than 24 hours.
+A modern, cloud-native healthcare data platform that orchestrates synthetic patient data generation, automated ETL/ELT workflows, data warehouse analytics, and AI-driven insights. Built with Apache Airflow, AWS S3, Snowflake, dbt, and Model Context Protocol (MCP) integration.
+
+### 🎯 Executive Summary
+
+This platform demonstrates a complete healthcare data analytics solution using FHIR R4 standards, combining:
+- **Automated Data Generation**: Continuous synthetic patient data creation using Synthea
+- **Cloud Data Lake**: Persistent storage in AWS S3 with lifecycle management  
+- **Enterprise Data Warehouse**: Snowflake-based analytics platform
+- **Modern Data Transformation**: dbt-powered ELT with 28+ analytics models
+- **AI Integration**: MCP server enabling natural language interaction with data pipelines
 
 ## 🏗️ Architecture
 
@@ -8,6 +18,10 @@ This project uses Apache Airflow 2.10 to orchestrate the generation of synthetic
 - **PostgreSQL 13**: Airflow metadata database
 - **Synthea**: Synthetic health data generator (Java-based)
 - **FHIR R4**: Healthcare data format with US Core profiles
+- **AWS S3**: Persistent storage for FHIR bundles
+- **Snowflake**: Cloud data warehouse for analytics
+- **dbt**: Data transformation and modeling
+- **MCP Server**: AI assistant integration for dbt operations
 
 ## 📋 Prerequisites
 
@@ -232,6 +246,19 @@ For production:
 - [Apache Airflow Documentation](https://airflow.apache.org/docs/)
 - [FHIR R4 Specification](https://hl7.org/fhir/R4/)
 - [US Core Implementation Guide](https://www.hl7.org/fhir/us/core/)
+- [dbt Documentation](https://docs.getdbt.com/)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+
+## 🤖 AI Assistant Integration
+
+This project includes a **Model Context Protocol (MCP) server** that enables AI assistants to interact with the dbt project:
+
+- Run dbt models and tests
+- View compiled SQL and documentation
+- Check data quality and freshness
+- Explore model lineage and dependencies
+
+See [DBT_MCP_SETUP.md](DBT_MCP_SETUP.md) for configuration details.
 
 ## 🤝 Support
 
